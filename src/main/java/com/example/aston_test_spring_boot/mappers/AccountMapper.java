@@ -8,4 +8,5 @@ import java.util.List;
 public interface AccountMapper {
     List<AccountDto> accountListEntityToListAccountDto(List<Account> accounts);
     AccountDto accountToAccountDto(Account account);
+    Account accountDtoToAccount(AccountDto accountDto);
 }

@@ -6,16 +6,25 @@ import com.example.aston_test_spring_boot.models.entities.Account;
 import com.example.aston_test_spring_boot.repositories.AccountRepository;
 import com.example.aston_test_spring_boot.services.impl.AccountServiceImpl;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -63,34 +72,37 @@ public class AccountServiceImplTest {
         assertEquals(4, accountDtoList.size());
     }
 
-    @Test
-    public void correctTransaction(){
+    @ParameterizedTest
+    @MethodSource(value = "provideIdAndValueForCorrectTest")
+    public void correctTransactionTest(Long fromId, Long toId, BigDecimal money, Integer expectedValueSander, Integer expectedValueRecipient){
         log.info("correctTransaction");
         //act
-       accountService.createTransaction(1l, 2l, new BigDecimal(500));
+       accountService.createTransaction(fromId, toId, money);
        //assert
-       assertEquals(new BigDecimal(500), accounts.get(0).getValue());
-       assertEquals(new BigDecimal(5500), accounts.get(1).getValue());
+       assertEquals(new BigDecimal(expectedValueSander), accounts.get((int) (fromId - 1L)).getValue());
+       assertEquals(new BigDecimal(expectedValueRecipient), accounts.get((int) (toId - 1L)).getValue());
        verify(accountRepository, times(2)).save(any(Account.class));
     }
 
-    @Test
-    public void incorrectValue(){
+    @ParameterizedTest
+    @ValueSource(doubles = {1001, 2000, 1000.08})
+    public void incorrectValueTest(double value){
+        log.info("incorrectValue");
         //arrange
-        BigDecimal value = new BigDecimal(1001);
+        BigDecimal money = new BigDecimal(value);
         //act
         IllegalArgumentException trows = assertThrows( IllegalArgumentException.class, () ->{
-        accountService.createTransaction(1l, 2l, value);
+        accountService.createTransaction(1l, 2l, money);
         });
         //assert
-        assertEquals("there isn`t any money" + value, trows.getMessage());
+        assertEquals("there isn`t any money" + money, trows.getMessage());
         assertEquals(new BigDecimal(1000), accounts.get(0).getValue());
         assertEquals(new BigDecimal(5000), accounts.get(1).getValue());
         verify(accountRepository, never()).save(any(Account.class));
     }
 
     @Test
-    public void incorrectAccount(){
+    public void incorrectAccountTest(){
         //arrange
         BigDecimal value = new BigDecimal(1001);
         //act
@@ -101,9 +113,35 @@ public class AccountServiceImplTest {
         assertEquals("invalid sender", trows.getMessage());
     }
 
+    @Test
+    public void saveAccountTest(){
+
+        when(accountRepository.save(any(Account.class))).then(new SaveAccountAnswer());
+
+        accountService.saveAccount(new AccountDto(new BigDecimal(5290),"kristina"));
+
+        assertEquals(5, accounts.size());
+    }
+
     @AfterEach
     public void teardown(){
         log.info("clear");
         accounts.clear();
+    }
+
+    class SaveAccountAnswer implements Answer<Account> {
+        @Override
+        public Account answer(InvocationOnMock invocationOnMock) throws Throwable {
+            Account account = invocationOnMock.getArgument(0);
+            accounts.add(account);
+            return account;
+        }
+    }
+
+    private static Stream<Arguments> provideIdAndValueForCorrectTest(){
+        return Stream.of(
+                Arguments.of(1L, 2L, new BigDecimal(200), 800, 5200),
+                Arguments.of(2L, 1L, new BigDecimal(3300), 1700, 4300)
+        );
     }
 }

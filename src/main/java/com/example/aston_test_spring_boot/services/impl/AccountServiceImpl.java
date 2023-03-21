@@ -24,23 +24,20 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public AccountDto getById(Long id) {
-
         return null;
     }
 
     @Override
     public List<AccountDto> getAllAccount() {
-
-
-
         return accountMapper.accountListEntityToListAccountDto(
                 (List<Account>) accountRepository.findAll());
-//        return (List<Account>) accountRepository.findAll();
     }
 
     @Override
     public Long saveAccount(AccountDto accountDto) {
-        return null;
+        Account account = accountMapper.accountDtoToAccount(accountDto);
+        accountRepository.save(account);
+        return account.getId();
     }
 
     @Override

@@ -12,6 +12,11 @@ import java.util.stream.Collectors;
 public class AccountMapperImpl implements AccountMapper {
 
     @Override
+    public Account accountDtoToAccount(AccountDto accountDto) {
+        return new Account(accountDto.getValue(), accountDto.getName());
+    }
+
+    @Override
     public List<AccountDto> accountListEntityToListAccountDto(List<Account> accounts) {
         return accounts.stream().map(this::accountToAccountDto).collect(Collectors.toList());
     }

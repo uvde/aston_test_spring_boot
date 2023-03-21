@@ -28,4 +28,9 @@ public class AccountsController {
                                   @PathVariable("value") BigDecimal value){
         accountService.createTransaction(fromId, toId, value);
     }
+
+    @PostMapping("/")
+    public Long saveAccount(@RequestBody AccountDto accountDto){
+        return accountService.saveAccount(accountDto);
+    }
 }
