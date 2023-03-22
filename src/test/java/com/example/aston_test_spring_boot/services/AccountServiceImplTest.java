@@ -46,7 +46,7 @@ public class AccountServiceImplTest {
     public List<Account> accounts;
 
     @BeforeEach
-    public void addList(){
+    public void addList() {
         log.info("BeforeEach");
         //arrange
         accounts = new ArrayList<>();
@@ -63,7 +63,7 @@ public class AccountServiceImplTest {
     }
 
     @Test
-    public void correctGetTest(){
+    public void correctGetTest() {
 
         log.info("correctGetTest");
         //act
@@ -74,25 +74,25 @@ public class AccountServiceImplTest {
 
     @ParameterizedTest
     @MethodSource(value = "provideIdAndValueForCorrectTest")
-    public void correctTransactionTest(Long fromId, Long toId, BigDecimal money, Integer expectedValueSander, Integer expectedValueRecipient){
+    public void correctTransactionTest(Long fromId, Long toId, BigDecimal money, Integer expectedValueSander, Integer expectedValueRecipient) {
         log.info("correctTransaction");
         //act
-       accountService.createTransaction(fromId, toId, money);
-       //assert
-       assertEquals(new BigDecimal(expectedValueSander), accounts.get((int) (fromId - 1L)).getValue());
-       assertEquals(new BigDecimal(expectedValueRecipient), accounts.get((int) (toId - 1L)).getValue());
-       verify(accountRepository, times(2)).save(any(Account.class));
+        accountService.createTransaction(fromId, toId, money);
+        //assert
+        assertEquals(new BigDecimal(expectedValueSander), accounts.get((int) (fromId - 1L)).getValue());
+        assertEquals(new BigDecimal(expectedValueRecipient), accounts.get((int) (toId - 1L)).getValue());
+        verify(accountRepository, times(2)).save(any(Account.class));
     }
 
     @ParameterizedTest
     @ValueSource(doubles = {1001, 2000, 1000.08})
-    public void incorrectValueTest(double value){
+    public void incorrectValueTest(double value) {
         log.info("incorrectValue");
         //arrange
         BigDecimal money = new BigDecimal(value);
         //act
-        IllegalArgumentException trows = assertThrows( IllegalArgumentException.class, () ->{
-        accountService.createTransaction(1l, 2l, money);
+        IllegalArgumentException trows = assertThrows(IllegalArgumentException.class, () -> {
+            accountService.createTransaction(1l, 2l, money);
         });
         //assert
         assertEquals("there isn`t any money" + money, trows.getMessage());
@@ -102,11 +102,11 @@ public class AccountServiceImplTest {
     }
 
     @Test
-    public void incorrectAccountTest(){
+    public void incorrectAccountTest() {
         //arrange
         BigDecimal value = new BigDecimal(1001);
         //act
-        NullPointerException trows = assertThrows(NullPointerException.class, ()->{
+        NullPointerException trows = assertThrows(NullPointerException.class, () -> {
             accountService.createTransaction(4l, 2l, value);
         });
         //assert
@@ -114,17 +114,17 @@ public class AccountServiceImplTest {
     }
 
     @Test
-    public void saveAccountTest(){
+    public void saveAccountTest() {
 
         when(accountRepository.save(any(Account.class))).then(new SaveAccountAnswer());
 
-        accountService.saveAccount(new AccountDto(new BigDecimal(5290),"kristina"));
+        accountService.saveAccount(new AccountDto(new BigDecimal(5290), "kristina"));
 
         assertEquals(5, accounts.size());
     }
 
     @AfterEach
-    public void teardown(){
+    public void teardown() {
         log.info("clear");
         accounts.clear();
     }
@@ -138,7 +138,7 @@ public class AccountServiceImplTest {
         }
     }
 
-    private static Stream<Arguments> provideIdAndValueForCorrectTest(){
+    private static Stream<Arguments> provideIdAndValueForCorrectTest() {
         return Stream.of(
                 Arguments.of(1L, 2L, new BigDecimal(200), 800, 5200),
                 Arguments.of(2L, 1L, new BigDecimal(3300), 1700, 4300)
